@@ -99,7 +99,7 @@ text  存放文章小说之类，范围特别大，性能特差，一般不用�
 a.使用int的话可以用PHP中的ip2long()函数将IP地址转换为一串数字，再存入数据库(取出来时用long2ip()转换回来)。但是有缺陷，不能转化ipv6的IP地址。
 b.使用varchar(15)占用15个字符，而int只占用4个字节，根据实际情况选择。
 </code></pre>
-
+ 
 <h3>MyISAM 与 Innodb 的区别</h3>
 <pre><code>1. 事务状态
     a.innodb支持事务
