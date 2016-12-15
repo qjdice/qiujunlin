@@ -27,7 +27,7 @@
       <header>
         <span class="ribbon-outer">
           <span class="ribbon-inner">
-            <h1>Qiujunlin</h1>
+            <h1>邱俊霖的博客</h1>
             <h2></h2>
           </span>
           <span class="left-tail"></span>
@@ -46,8 +46,6 @@
 
 
       <section id="main_content">
-        <h3>
-<a id="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>邱俊霖博客</h3>
 <h1>数据库性能调优</h1>
 <p>数据库调优，就好比盖楼打地基，地基打得不稳，楼层一高，就会塌方。数据库也是如此，数据少，并发小，隐藏的问题是发现不了的，只要达到一定规模后，所有的问题就会全部曝露出来了，所以前期的设计阶段尤为重要。</p>
 <h2>数据库优化分类</h2>
@@ -85,7 +83,7 @@
 <ul>
 <li>数字类型</li>
 </ul>
-<p><img src="./img/2016-08-05_201403.png" /></p>
+<p><img src="./imges/2016-08-05_201403.png" /></p>
 <p>tinyint类型最大存储是255。</p>
 <pre><code>create table tmp(id tinyint);
 
@@ -360,18 +358,6 @@ long_query_time = 1      # 超过1秒的SQL会记录下来
 <p>limit分页优化</p>
 <p>传统的分页：select SQL<em>NO</em>CACHE * from t2 order by id limit 99999,10;</p>
 <p>传统的的分页，虽然用上了id索引，但要从第一行
-<h3>
-<a id="creating-pages-manually" class="anchor" href="#creating-pages-manually" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Creating pages manually</h3>
-
-<p></p>
-
-<h3>
-<a id="authors-and-contributors" class="anchor" href="#authors-and-contributors" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Authors and Contributors</h3>
-
-<p></p>
-
-<h3>
-<a id="support-or-contact" class="anchor" href="#support-or-contact" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Support or Contact</h3>
 
 <p></p>
       </section>
