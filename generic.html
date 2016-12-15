@@ -32,13 +32,155 @@
 			<img src="images/pic11.jpg" alt="" />
 		</div>
 		<header>
-			<h1>Lorem ipsum dolor sit amet</h1>
-			<p class="info">3 days ago by <a href="#">Jane Doe</a></p>
+			<h1>关于数据库优化一些小建议</h1>
+			
 		</header>
-		<p>Nullam posuere erat vel placerat rutrum. Praesent ac consectetur dui, et congue quam. Donec aliquam lacinia condimentum. Integer porta massa sapien, commodo sodales diam suscipit vitae. Aliquam quis felis sed urna semper semper. Phasellus eu scelerisque mi. Vivamus aliquam nisl libero, sit amet scelerisque ligula laoreet vel. Nunc ullamcorper ipsum at diam congue luctus. Sed nec sapien blandit, tempor quam non, consectetur turpis. Morbi libero lorem, hendrerit sed metus non, malesuada placerat nulla. Sed nisi turpis, rutrum eget rutrum euismod, consequat ullamcorper eros. Quisque tortor nunc, sodales convallis nisl non, bibendum tincidunt tortor. Etiam pellentesque tincidunt nunc, a dignissim dolor tempus et. Pellentesque in urna ligula. Fusce ligula velit, mollis ac diam non, rutrum fringilla turpis.</p>
-		<p>Aliquam consequat, nulla sed sodales convallis, sem odio porttitor justo, non volutpat augue libero eget neque. Nunc consequat arcu nec tortor venenatis tempus a placerat mauris. Nam ultricies consequat ligula, et placerat arcu ultrices a. Sed placerat ipsum lacus, at imperdiet nisi imperdiet at. Vivamus diam dui, accumsan quis lacinia ac, sollicitudin feugiat metus. Vestibulum a velit ac eros blandit molestie non eget erat. Nunc eget odio erat. Nulla sit amet enim pharetra tortor molestie tempor nec sed turpis. Cras eget odio at erat dictum tincidunt. Sed facilisis convallis mi, eget tempor nunc pellentesque pulvinar. Etiam volutpat luctus tristique.</p>
-		<p>Aliquam erat eros, pretium non facilisis id, mollis a lacus. Nam nunc nisl, consequat at est vel, ornare feugiat tortor. Phasellus tempor ex vel mi blandit convallis. Sed accumsan sapien quis bibendum posuere. Vivamus convallis mattis ipsum. Suspendisse viverra purus non mi cursus, vitae pulvinar dui condimentum. Donec dui lacus, pretium in neque vitae, laoreet tempus nulla. Maecenas ac augue bibendum, consectetur ante eu, vulputate ipsum.</p>
-		<p>Nullam volutpat, sem at hendrerit volutpat, magna orci facilisis purus, et venenatis sapien sapien pretium libero. Duis hendrerit eget metus at molestie. Duis leo lorem, interdum a placerat ut, ullamcorper at eros. Donec convallis auctor cursus. Integer placerat felis mauris, sed cursus diam sodales et. Phasellus mi nibh, scelerisque vulputate viverra ut, dictum vitae mi. In at blandit felis. Aenean id porttitor neque. Nam bibendum a orci non pretium. Pellentesque feugiat erat augue, quis venenatis diam mollis eu.</p>
+		<h2>软件</h2>
+<pre><code>a. 建表
+b. SQL语句优化
+c. 数据库配置参数优化 =&gt; DBA做的(DBA数据库管理员)
+</code></pre>
+
+<h3>建表的一些建议</h3>
+<pre><code>1.选择合适的字段类型，考虑字段可扩展性。
+2.遵守数据库三范式：
+    a.保证每一个字段列都是原子列(不能再继续往下分了)。
+    b.保证每个字段都与主键有关联。
+    c.保证每个字段都和主键有直接关联而不是间接关联。
+3.选择合适的表引擎，一般都是innodb。
+4.选择合适的字符集，一般都是utf8。
+5.适度添加冗余字段，适度反范式(以空间换取时间)。
+6.适度添加索引(经常出现在where/order by/group by关键字的字段)，使用索引检索数据。
+7.尽量给每个字段添加not null。
+8.把一些不常用的字段划分到其他表中(使用联表关联)。
+9.把一些数据量大的字段划分到其他表。
+</code></pre>
+
+<h2>字段类型选择</h2>
+<pre><code>数据类型
+a.数字类型
+
+    tinyint 占用1个字节，有符号：-127 ~ 128 无符号：0~255
+    int     占用4个字节，有符号：-21亿~21亿  无符号：42亿
+    bigint  占用8个字节，很大很大
+        tinyint(1)与tinyint(11)无区别，占用大小和范围无区别，只是显示位数不同，如果加了零填充关键字，则前面会出现多个0补充位置
+
+    如果一个字段能够使用数字类型存储，一般不使用其他类型。
+
+b.字符串类型
+
+    char(n) 定长(设定多长就占用多长)，n代表字符个数(不是字节数，字符个数包括中文和英语)，范围：0~255 即255个英文或255个中文
+
+    varchar(n) 变长(根据字符个数变化占用长度) n代表字符个数(~)  n可以大于255
+    如果是varchar(3) 里面放一个'a' 此时占用的字符个数为2(因为是变长，所以需要有一位来存储长度) 
+
+一般情况下，如果数据是固定长度，最好选择char,不固定长度优先选择varchar。
+
+c.时间类型
+
+time time 占用三个字节，只能存小时分钟秒。
+datetime  占用八个字节，表示年月时分秒。
+date      占用三个字节，表示年月日，一般用于存储生日。
+timestamp 占用四个字节，表示年月日时分秒，并且如果不给它值，默认使用当前时间戳的值。
+
+
+d.文本类型
+
+text  存放文章小说之类，范围特别大，性能特差，一般不用。
+</code></pre>
+
+<h3>字段类型的选择实例</h3>
+<p>1、用户状态应该用什么类型存储？</p>
+<pre><code>1、tinyint 2、枚举类型
+一般都会使用枚举类型，但是考虑到扩展性，会使用tinyint  因为枚举类型一旦设计完数据库，如果在项目后期想要增加多一个状态，使用枚举就得修改表结构，而使用tinyint则不需要修改表结构直接加多一个状态即可。
+</code></pre>
+
+<p>2、IP地址使用什么类型？</p>
+<pre><code>1、int   2、varchar(15)
+a.使用int的话可以用PHP中的ip2long()函数将IP地址转换为一串数字，再存入数据库(取出来时用long2ip()转换回来)。但是有缺陷，不能转化ipv6的IP地址。
+b.使用varchar(15)占用15个字符，而int只占用4个字节，根据实际情况选择。
+</code></pre>
+
+<h3>MyISAM 与 Innodb 的区别</h3>
+<pre><code>1. 事务状态
+    a.innodb支持事务
+    b.MyISAM不支持事务
+2. 锁机制
+    a.innodb支持行锁和表锁
+    b.myisam只支持表锁
+3. 查询速度
+    在mysql5.6版本以前一般认为myisam查询速度比较快，在5.6以后innodb与myisam相差无几
+4. 文件保存方式
+    myisam分为三个文件保存 .MYD存放数据 .MYI存放索引 .FRM存放表结构
+    innodb索引和数据用一个文件存储
+</code></pre>
+
+<h3>行锁与表锁区别</h3>
+<pre><code>行锁：影响粒度小(范围小)，上锁慢，并发度高(只有通过索引操作数据字段才能使用行锁)。
+表锁：影响粒度大(范围大)，上锁快，并发度底。
+</code></pre>
+
+<h3>读锁(共享锁)与写锁(排它锁)</h3>
+<pre><code>在进行读操作的时候，会产生读锁，其他用户可以读数据，但不能写，读锁阻塞写。(如果是myisam引擎则整个表只能读不能写，innodb引擎可能是表锁可能是行锁)
+在进行写操作的时候，会产生写锁，其他用户不能读不能写，写锁阻塞读和写(读锁是在读的时候自动产生，写锁需要在操作以后后面加 for update)。
+</code></pre>
+
+<h2>到底选择哪种引擎</h2>
+<p>如果一个表写操作频繁，这个时候建议选择Innodb，因为innodb支持行锁，可以让这个表并发度高。</p>
+<p>如果一个表读操作频繁，写操作很少，这个时候可以选择myisam。</p>
+<h2>关于索引</h2>
+<pre><code>索引分为:主键索引(primary key),普通索引(index),唯一索引(unique),全文索引(fulltext)
+
+索引就相当于一本书的目录，可以快速定位到需要检索的数据段。
+优点：减少扫描行数，加快检索速度。
+缺点：影响写操作，占用磁盘空间。
+所以需要合理的使用索引，不要添加太多索引，执行写操作时需要整理索引，所以索引太多的话当执行大量的写操作则会导致数据库崩溃，就好比一本写好了的书要添加新章节就需要添加新目录，且索引还会占据一定的空间。
+</code></pre>
+
+<h2>建立索引</h2>
+<pre><code>主键索引一般为自增ID建立,只需要在建表语句后面加 primary key(`id`),或者在id那一行加。
+唯一索引一般用于身份证或者用户账号，在建表语句该字段后加 unique
+普通索引，使用key 索引名(字段名) 或 key (字段名) 不命名的话则直接使用字段名当索引名，建完表后可使用alter table 表名 add index/unique/primary key  索引名(字段名)。
+
+如果在查询的时候有多个字段作为条件，那么需要为这几个字段添加联合索引，避免冗余。
+alter table user add index idx(name,pass);
+将区分度较大的字段写在添加联合索引的前面。
+区分度：可以排除更多数据的条件就是区分度大。
+</code></pre>
+
+<h2>普通索引失效的场合</h2>
+<pre><code>1.当使用LIKE关键字查询的时候，匹配字符中第一个字符是%，索引失败。
+2.or 后面的字段，如果其中一个字段没有索引，则整条语句都使用不上索引。
+3.将字符串类型直接用数字插入 如 '123' =&gt; 123。
+4.如果使用函数修饰字段，则索引失效。
+5.联合索引，只有查询语句中使用了索引中的第一个字段，才会使用到索引。
+create index in_name on user(name,email)
+explain select * from user where name = 'jack'; //用到索引
+explain select * from user where email = 'jack@qq.com'; //用不到索引
+</code></pre>
+
+<h2>分析SQL语句执行效率</h2>
+<p>explain  /  desc(二者都可)
+   desc  select id,name from user;</p>
+<h2>SQL语句的优化</h2>
+<pre><code>一、避免使用子查询，使用联表查询代替left join
+    select * from user where id  = (select id from user_detail)
+
+二、根据索引检索数据
+
+三、limit分页优化
+原：select name,sex from user limit 222222,2;
+优化：select name,sex from user where id &gt; 222222 limit 2;
+当ID是连续不断开的时候可以这么优化。
+
+四、避免使用 * 号，只查需要的字段，减少数据传输大小
+
+五、尽量使用limit，查需要的数据量，减少数据传输大小
+
+六、使用冗余字段，减少联表查询。
+
+七、使用索引检索数据，减少检索时间。
+</code></pre>
 	</div>
 </section>
 
@@ -49,7 +191,7 @@
 		<li><a href="#" class="icon fa-facebook"><span class="label">Facebook</span></a></li>
 		<li><a href="#" class="icon fa-instagram"><span class="label">Instagram</span></a></li>
 	</ul>
-	<div class="copyright">Copyright &copy; 2016.Company name All rights reserved.<a target="_blank" href="http://sc.chinaz.com/moban/">&#x7F51;&#x9875;&#x6A21;&#x677F;</a></div>
+	<div class="copyright">Copyright &copy; 2016.Company name All rights reserved</div>
 </footer>
 
 <!-- Scripts -->
