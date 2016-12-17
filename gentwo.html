@@ -1,0 +1,175 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<title>Generic - </title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="assets/css/main.css" />
+</head>
+<body> 
+ 
+<!-- Header -->
+<header id="header">
+	<a href="index.html" class="logo"><strong>ChinaZ</strong></a>
+	<nav>
+		<a href="#menu">Menu</a>
+	</nav>
+</header>
+
+<!-- Nav -->
+<nav id="menu">
+	<ul class="links">
+		<li><a href="index.html">Home</a></li>
+		<li><a href="generic.html">Generic</a></li>
+	</ul>
+</nav>
+
+<!-- Main -->
+<section id="main">
+	<div class="inner">
+		<div class="image fit">
+			<img height="407" src="images/55.jpg" alt="" />
+		</div>
+		<header>
+			<h1>PHP+Mysql+jQuery统计当前在线用户数</h1>
+			
+		</header>
+		<h5>我们要统计在一段时间内访问站点的人数，有多种解决方案，你可以使用cookie，session结合文本或者数据库来记录用户访问数。本文将使用PHP，结合Mysql以及jQuery，展示一个统计在线人数以及访客地区分布的示例。</h5>
+<p><img src="./images/ca2ef2f.jpg" /></p>
+<p>通常，当访客访问网站时，页面记录用户的cookie信息，当cookie过期即认为用户不在线。本文中我们使用PHP记录访客IP，并在客户端记录cookie及过期时间，同时通过新浪IP地址接口，获取访客的地理位置（本例只记录省份），一并写入mysql表中，即可统计一段时间内的访客总数，也可以查看访客的地区分布。</p>
+<p>我们在页面上放置一个显示当前在线人数的div#total以及一个用于展示访客地区分布的列表#onlinelist，默认我们在列表中放置一张与加载动画图片，后面我们用jQuery控制当鼠标滑向时展示详细列表。</p>
+<pre><code>&lt;div class=&quot;demo&quot;&gt; 
+  &lt;div id=&quot;total&quot;&gt;当前在线：&lt;span id=&quot;onlinenum&quot;&gt;&lt;span&gt;&lt;/div&gt; 
+  &lt;ul id=&quot;onlinelist&quot;&gt; 
+    &lt;li&gt;&lt;img src=&quot;loader.gif&quot;&gt;&lt;/li&gt; 
+  &lt;/ul&gt; 
+&lt;/div&gt; 
+</code></pre>
+
+<p>我们用CSS来渲染显示效果，为了就是不让我们的示例很难看，下面的代码中，我们使用了CSS3，时代在进步啊，所以建议使用现代浏览器预览效果。</p>
+<pre><code> .demo{width:150px; margin:20px auto; font-size:14px} 
+  #total{padding:6px 10px; background:#090 url(arr.png) no-repeat right top; color:#fff;  
+ cursor:pointer; -moz-border-radius:5px; -webkit-border-radius:5px; border-radius:5px;  
+ -moz-box-shadow:0 0 3px #ccc; -webkit-box-shadow:0 0 3px #ccc;box-shadow:0 0 3px #ccc;} 
+ #onlinelist{background:#f7f7f7; border:1px solid #d3d3d3; display:none; -moz-border-radius:5px;  
+ -webkit-border-radius:5px; border-radius:5px; -moz-box-shadow:0 0 3px #ccc;  
+ -webkit-box-shadow:0 0 3px #ccc;box-shadow:0 0 3px #ccc;} 
+ #onlinelist li{height:20px; line-height:20px;padding:4px 6px;border-bottom:1px dotted #d9d9d9} 
+ #onlinelist li span{float:right} 
+ #onlinelist li:hover{background:#fff} 
+</code></pre>
+
+<p>我们要准备一张数据表online，用来记录访客IP、地区及访问时间。整个示例统计过程都依赖这张表，其结构如下：</p>
+<pre><code>CREATE TABLE IF NOT EXISTS `online` ( 
+  `id` int(11) NOT NULL AUTO_INCREMENT, 
+  `ip` varchar(30) NOT NULL, 
+  `province` varchar(64) NOT NULL, 
+  `addtime` int(10) NOT NULL DEFAULT '0', 
+  PRIMARY KEY (`id`) 
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8; 
+</code></pre>
+
+<h5>online.php用来记录访客信息，包括IP地址和地区。首先检测数据表中是否有访客IP记录，如果有，则只更新访问时间，否则，获取用户省份区域，并将用户IP即省份区域插入到表中。在此，可以判断是否存在访客的cookie记录，如果不存在则向新浪IP地址库请求获取访客的区域信息，并设置cookie值和过期时间。最后，我们删除表中已经过期的记录，统计总记录数并输出，详细请看代码注释。</h5>
+<pre><code>    include_once('connect.php'); //连接数据库 
+
+    $ip = get_client_ip(); //获取客户端IP 
+    $time = time(); 
+    //查询表中是否有ip为当前访客IP的记录 
+    $query = mysql_query(&quot;select id from online where ip='$ip'&quot;); 
+    if(!mysql_num_rows($query)){//如果不存在访客IP 
+        if($_COOKIE['geoData']){//如果存在cookie，则获取用户的区域 
+            $province = $_COOKIE['geoData']; //区域（省份） 
+        }else{ 
+            $api = &quot;http://int.dpool.sina.com.cn/iplookup/iplookup.php?format=json&amp;ip=$ip&quot;; 
+            $json = file_get_contents($api);//调用新浪IP地址库 
+            $arr = json_decode($json,true);//解析json 
+            $province = $arr['province'];//获取省份 
+            setcookie('geoData',$province,$time+600); //设置cookie，设置过期时间为10分钟 
+        } 
+        //将访客信息插入到数据表中 
+        mysql_query(&quot;insert into online (ip,province,addtime) values ('$ip','$province','$time')&quot;); 
+    }else{//如果存在，则更新该用户访问时间 
+        mysql_query(&quot;update online set addtime='$time' where ip='$ip'&quot;); 
+    } 
+    //删除已过期的记录 
+    $outtime = $time-600; 
+    mysql_query(&quot;delete from online where addtime&lt;$outtime&quot;); 
+    //统计总记录数，即在线用户数 
+    list($totalOnline) = mysql_fetch_array(mysql_query(&quot;select count(*) from online&quot;));  
+    echo $totalOnline;//输出在线总数 
+    mysql_close(); 
+</code></pre>
+
+<p>函数get<em>client</em>ip()用来获取用户真实IP。</p>
+<pre><code>function get_client_ip() { 
+    if (getenv(&quot;HTTP_CLIENT_IP&quot;) &amp;&amp; strcasecmp(getenv(&quot;HTTP_CLIENT_IP&quot;), &quot;unknown&quot;)) 
+        $ip = getenv(&quot;HTTP_CLIENT_IP&quot;); 
+    else if (getenv(&quot;HTTP_X_FORWARDED_FOR&quot;) &amp;&amp; strcasecmp(getenv(&quot;HTTP_X_FORWARDED_FOR&quot;),  
+&quot;unknown&quot;)) 
+        $ip = getenv(&quot;HTTP_X_FORWARDED_FOR&quot;); 
+    else if (getenv(&quot;REMOTE_ADDR&quot;) &amp;&amp; strcasecmp(getenv(&quot;REMOTE_ADDR&quot;), &quot;unknown&quot;)) 
+        $ip = getenv(&quot;REMOTE_ADDR&quot;); 
+    else if (isset ($_SERVER['REMOTE_ADDR']) &amp;&amp;  
+$_SERVER['REMOTE_ADDR'] &amp;&amp; strcasecmp($_SERVER['REMOTE_ADDR'], &quot;unknown&quot;)) 
+        $ip = $_SERVER['REMOTE_ADDR']; 
+    else 
+        $ip = &quot;unknown&quot;; 
+    return ($ip); 
+} 
+</code></pre>
+
+<p>geo.php用来统计各省份（区域）访客人数分布。通过查询数据库，并按省份分组排序即可，注意我们将最终的数据集以JSON的形式输出，便于前端ajax交互。</p>
+<pre><code>include_once('connect.php');//连接数据库 
+//查询区域统计 
+$sql = &quot;select province,count(*) as total from online group by province order by total desc&quot;; 
+$result = mysql_query($sql); 
+while($row=mysql_fetch_array($result)){ 
+    $list[] = array( 
+        'province' =&gt; $row['province'], 
+        'total' =&gt; $row['total'] 
+    );     
+} 
+echo json_encode($list);//以json格式输出 
+</code></pre>
+
+<p>前端页面需要做的是，页面加载时展示访客总数，即使用ajax请求online.php即可。然后当鼠标滑向统计箭头时，通过ajax请求geo.php获取各区域省份的在线人数，并以下拉的方式展现效果。</p>
+<pre><code>    $(function(){ 
+    $(&quot;#onlinenum&quot;).load(&quot;online.php&quot;); 
+
+    $(&quot;.demo&quot;).hover(function(){ 
+        $(&quot;#onlinelist&quot;).slideDown(&quot;fast&quot;); 
+        var str = ''; 
+        $.getJSON(&quot;geo.php&quot;,function(json){ 
+            $.each(json,function(index,array){ 
+                str = str + &quot;&lt;li&gt;&lt;span&gt;&quot;+array['total']+&quot;&lt;/span&gt;&quot;+array['province']+&quot;&lt;/li&gt;&quot;; 
+            }); 
+            $(&quot;#onlinelist&quot;).html(str); 
+        }); 
+    },function(){ 
+        $(&quot;#onlinelist&quot;).slideUp(&quot;fast&quot;); 
+    }); 
+}); 
+</code></pre>
+
+	</div>
+</section>
+
+<!-- Footer -->
+<footer id="footer">
+	<ul class="icons">
+		<li><a href="#" class="icon fa-twitter"><span class="label">Twitter</span></a></li>
+		<li><a href="#" class="icon fa-facebook"><span class="label">Facebook</span></a></li>
+		<li><a href="#" class="icon fa-instagram"><span class="label">Instagram</span></a></li>
+	</ul>
+	<div class="copyright">Copyright &copy; 2016.Company name All rights reserved</div>
+</footer>
+
+<!-- Scripts -->
+<script src="assets/js/jquery.min.js"></script>
+<script src="assets/js/jquery.scrolly.min.js"></script>
+<script src="assets/js/skel.min.js"></script>
+<script src="assets/js/util.js"></script>
+<script src="assets/js/main.js"></script>
+
+</body>
+</html>
